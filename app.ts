@@ -22,7 +22,7 @@ prisma.$connect().then(()=> {
    }
 });
 
-app.set("port", process.env.PORT || 3030);
+app.set("port", process.env.PORT || 3031);
 
 app.use(morgan("dev"));
 app.use(express.json());
