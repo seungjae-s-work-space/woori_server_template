@@ -1,0 +1,13 @@
+.env
+
+/node_modules
+
+package-lock.json
+
+/postgres_data
+
+/cloudflare/*.pem
+
+.notepad
+
+package-lock.json
