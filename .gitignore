@@ -6,3 +6,8 @@ package-lock.json
 
 /postgres_data
 
+/cloudflare/*.pem
+
+.notepad
+
+package-lock.json
