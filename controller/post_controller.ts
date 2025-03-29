@@ -18,6 +18,12 @@ export class PostController {
             // DTO 형태로 req.body 받기
             const postData: CreatePostDto = req.body;
 
+            console.log('📝 요청 데이터:', {
+                postData,
+                body: req.body,
+                contentType: req.headers['content-type']
+            });
+
             // 간단 유효성 검사
             if (!postData.content) {
                 res.status(400).json({ message: 'Content is required' });
@@ -33,8 +39,15 @@ export class PostController {
             });
 
             res.status(201).json({ message: 'Success', data: newPost });
-        } catch (error) {
-            console.error('createPost error:', error);
+        } catch (error: any) {
+            console.error('createPost error:', {
+                error: error,
+                errorName: error?.name,
+                errorMessage: error?.message,
+                errorStack: error?.stack,
+                requestBody: req.body,
+                headers: req.headers
+            });
             res.status(500).json({
                 message: 'Fail',
                 errorCode: 'errorCode_public001',
@@ -59,6 +72,8 @@ export class PostController {
                 where: { userId: decoded.userId },
                 orderBy: { createdAt: 'desc' },
             });
+
+            console.log('📝 내 게시글 목록:', posts);
 
             res.status(200).json({ message: 'Success', data: posts });
         } catch (error) {
