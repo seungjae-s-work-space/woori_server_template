@@ -105,8 +105,8 @@ export class AuthController {
         nickname: loginData.nickname,
       }
 
-      const expiresIn = "7d";
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const expiresIn = "100d";
+      const expiresAt = new Date(Date.now() + 100 * 24 * 60 * 60 * 1000);
 
       const token = jwt.sign(
         tokenPayload,
