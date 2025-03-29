@@ -15,6 +15,8 @@ export class UserController {
     // 로그인
     async getUser(req: Request, res: Response) {
         try {
+            console.log("🔑 토큰 확인");
+            console.log(req.headers.authorization);
             const token = req.headers.authorization?.split(' ')[1]; // 헤더에서 토큰 꺼내서 가져옴
 
             if (!token) {
@@ -71,6 +73,16 @@ export class UserController {
             });
 
         } catch (error) {
+            console.error("❌ 에러 발생:", error);
+            if (error instanceof jwt.TokenExpiredError) {
+                res.status(401).json({
+                    message: 'Fail',
+                    errorCode: 'errorCode_auth009'
+                });
+                return;
+            }
+
+
             res.status(500).json({
                 message: 'Fail',
                 errorCode: 'errorCode_public001'
