@@ -20,8 +20,11 @@ model User {
   posts         Post[]
   invitesFromMe Invite[]  @relation("fromUserRelation")
   invitesToMe   Invite[]  @relation("toUserRelation")
+  inviteCodesFromMe InviteCode[] @relation("InviteCodeFromUser")
+  inviteCodesToMe   InviteCode[] @relation("InviteCodeToUser")
   comments      Comment[]
   likes         Like[]
+
 }
 
 model Tokens {
@@ -48,6 +51,20 @@ model Invite {
 
   toUserId String
   toUser   User   @relation("toUserRelation", fields: [toUserId], references: [id])
+
+  @@index([fromUserId])
+  @@index([toUserId])
+}
+
+model InviteCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  fromUserId String
+  toUserId  String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  fromUser  User     @relation("InviteCodeFromUser", fields: [fromUserId], references: [id])
+  toUser    User?    @relation("InviteCodeToUser", fields: [toUserId], references: [id])
 
   @@index([fromUserId])
   @@index([toUserId])

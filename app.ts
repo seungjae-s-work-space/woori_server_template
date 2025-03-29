@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import authRouter from "./routes/auth_route.js";
 import userRouter from "./routes/user_route.js";
 import postRouter from "./routes/post_route.js";
+import exploreRouter from './routes/explore_route.js';
+import inviteRouter from './routes/invite_route.js';
 import { prisma } from "./prisma.js";  // prisma 인스턴스 import
 
 dotenv.config();
@@ -33,6 +35,8 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/posts", postRouter);
+app.use('/api/explore', exploreRouter);
+app.use('/api/invite', inviteRouter);
 
 type CustomError = Error & { status?: number };
 
