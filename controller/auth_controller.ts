@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import { CreateUserDto, LoginDto } from '../types/auth_type.js';
 import jwt from 'jsonwebtoken';
-import {prisma} from '../prisma.js';
+import { prisma } from '../prisma.js';
 
 export class AuthController {
   // 회원가입
@@ -22,7 +22,20 @@ export class AuthController {
         // 유저가 이미 존재하면 400 에러 응답 후 함수 종료
         res.status(400).json({
           message: 'Fail',
-          errorCode: 'errorCode_auth004',
+          errorCode: 'errorCode_auth004', //이미 가입된 이메일
+        });
+        return;
+      }
+
+      const existingNickname = await prisma.user.findUnique({
+        where: { nickname: userData.nickname },
+      });
+
+      if (existingNickname) {
+        // 유저닉네임이 이미 존재하면 400 에러 응답 후 함수 종료
+        res.status(400).json({
+          message: 'Fail',
+          errorCode: 'errorCode_auth005',//이미 존재하는 닉네임
         });
         return;
       }
@@ -35,6 +48,7 @@ export class AuthController {
         data: {
           email: userData.email,
           password: hashedPassword,
+          nickname: userData.nickname
         },
       });
 
@@ -55,13 +69,13 @@ export class AuthController {
 
       // 유저 조회
       const user = await prisma.user.findUnique({
-        where: { email: loginData.email },
+        where: { nickname: loginData.nickname },
       });
 
       if (!user) {
         res.status(400).json({
           message: 'Fail',
-          errorCode: 'errorCode_auth002',
+          errorCode: 'errorCode_auth006',
         });
         return;
       }
@@ -71,21 +85,53 @@ export class AuthController {
       if (!isMatch) {
         res.status(400).json({
           message: 'Fail',
-          errorCode: 'errorCode_auth003',
+          errorCode: 'errorCode_auth007',
         });
         return;
       }
+      const deletedTokens = await prisma.tokens.deleteMany({
+        where: {
+          userId: user.id,
+          isRevoked: false
+        }
+      });
 
-      // JWT 토큰 발급
+
+      console.log(`🗑️ 삭제된 토큰 개수: ${deletedTokens.count}`);
+
+
+      const tokenPayload = {
+        userId: user.id,
+        nickname: loginData.nickname,
+      }
+
+      const expiresIn = "7d";
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
       const token = jwt.sign(
-        { userId: user.id },
-        process.env.JWT_SECRET ?? 'MY_JWT_SECRET', // .env에서 가져오거나 임시로 문자열 작성
-        { expiresIn: '1d' },
+        tokenPayload,
+        process.env.JWT_SECRET!,
+        { expiresIn }
       );
 
+
+      // 토큰을 DB에 저장
+      const createdToken = await prisma.tokens.create({
+        data: {
+          token: token,
+          userId: user.id,
+          expiresAt: expiresAt,
+          isRevoked: false
+        }
+      });
+
+      console.log("📌 새 토큰 저장 완료:", createdToken.token);
+
       res.status(200).json({
-        message: 'Login Success',
-        token,
+        message: "Success",
+        data: {
+          token: createdToken.token,
+        }
       });
     } catch (error) {
       next(error);

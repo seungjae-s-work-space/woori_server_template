@@ -10,9 +10,93 @@ generator client {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  nickname      String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  token         Tokens[]
+  posts         Post[]
+  invitesFromMe Invite[]  @relation("fromUserRelation")
+  invitesToMe   Invite[]  @relation("toUserRelation")
+  comments      Comment[]
+  likes         Like[]
+}
+
+model Tokens {
+  id         String   @id @default(uuid())
+  token      String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  lastUsedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  isRevoked  Boolean  @default(false)
+
+  @@index([userId])
+}
+
+model Invite {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // fromUser가 toUser를 "초대"했다.
+  // => "toUser"는 "fromUser"의 Post를 볼 수 있다!
+  fromUserId String
+  fromUser   User   @relation("fromUserRelation", fields: [fromUserId], references: [id])
+
+  toUserId String
+  toUser   User   @relation("toUserRelation", fields: [toUserId], references: [id])
+
+  @@index([fromUserId])
+  @@index([toUserId])
+}
+
+model Post {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // 이미지 URL (한 장만 관리한다면 간단히 String 필드로)
+  imageUrl String?
+
+  // 게시글 텍스트
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // 댓글, 좋아요
+  comments Comment[]
+  likes    Like[]
+}
+
+model Comment {
+  id     String @id @default(uuid())
+  postId String
+  post   Post   @relation(fields: [postId], references: [id])
+
+  userId String // 댓글 작성자
+  user   User   @relation(fields: [userId], references: [id])
+
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Like {
+  id     String @id @default(uuid())
+  postId String
+  post   Post   @relation(fields: [postId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId]) // 한 사용자가 같은 게시글에 중복 좋아요 방지
+  @@index([userId])
+  @@index([postId])
 }

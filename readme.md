@@ -69,7 +69,7 @@ datasource db {
 docker-compose down -v
 docker-compose up
 ```
-<!-- 
+<!--
 ## 5. 테스트코드 확인 시
 ```bash
 docker-compose down -v
@@ -78,7 +78,7 @@ npx prisma migrate deploy
 ``` -->
 
 
-<!-- 
+<!--
 ## 5. 스키마 수정 시
 ```bash
 nodemodule지우고 npm install
@@ -87,6 +87,14 @@ nodemodule지우고 npm install
 ```bash
 npx prisma studio
 ```
+
+
+스키마 수정
+npx prisma format
+npx prisma migrate dev --name "add_comments_likes_relations"
+npx prisma generate
+
+
 
 
 이 단계를 통해 PostgreSQL 데이터가 초기화되며, 컨테이너가 새롭게 빌드됩니다.

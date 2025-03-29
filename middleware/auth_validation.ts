@@ -2,10 +2,11 @@ import { Request, Response, NextFunction } from "express";
 
 
 export const validationSignUp = (req: Request, res: Response, next: NextFunction): void => {
-    const { email, password, restaurantName, foodService, tableCount, address } = req.body;
+    const { email, password, nickname } = req.body;
 
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const nicknameRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         res.status(400).json({ message: "Fail", errorCode: "errorCode_auth001" });
         return;
@@ -16,7 +17,7 @@ export const validationSignUp = (req: Request, res: Response, next: NextFunction
         return;
     }
 
-    if (!password || !restaurantName || !foodService || !tableCount || !address) {
+    if (!password || !nickname) {
         res.status(400).json({ message: "Fail", errorCode: "errorCode_auth003" });
         return;
     }
