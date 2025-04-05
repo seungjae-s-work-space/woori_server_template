@@ -5,68 +5,6 @@ import { CreateInviteDto, InviteListResponseDto, InviteLinkResponseDto } from '.
 import crypto from 'crypto';
 
 export class InviteController {
-    // 초대 생성
-    public async createInvite(req: Request, res: Response): Promise<void> {
-        try {
-            // 1) 토큰에서 fromUserId 추출
-            const token = req.headers.authorization?.split(' ')[1];
-            if (!token) {
-                res.status(401).json({ message: 'No token provided' });
-                return;
-            }
-            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-            const fromUserId = decoded.userId;
-
-            // 2) 요청 데이터 검증
-            const inviteData: CreateInviteDto = req.body;
-            if (!inviteData.toUserEmail) {
-                res.status(400).json({ message: 'toUserEmail is required' });
-                return;
-            }
-
-            // 3) 초대할 사용자 찾기
-            const toUser = await prisma.user.findUnique({
-                where: { email: inviteData.toUserEmail }
-            });
-
-            if (!toUser) {
-                res.status(404).json({ message: 'User not found' });
-                return;
-            }
-
-            // 4) 이미 초대한 기록 확인
-            const existingInvite = await prisma.invite.findFirst({
-                where: {
-                    fromUserId,
-                    toUserId: toUser.id
-                }
-            });
-
-            if (existingInvite) {
-                res.status(400).json({ message: 'Already invited' });
-                return;
-            }
-
-            // 5) 초대 생성
-            const invite = await prisma.invite.create({
-                data: {
-                    fromUserId,
-                    toUserId: toUser.id
-                }
-            });
-
-            res.status(201).json({
-                message: 'Success',
-                data: invite
-            });
-        } catch (error: any) {
-            console.error('createInvite error:', error);
-            res.status(500).json({
-                message: 'Fail',
-                errorCode: 'errorCode_public001'
-            });
-        }
-    }
 
     // 내가 초대한 사람 목록
     public async getInvitesFromMe(req: Request, res: Response): Promise<void> {
@@ -244,8 +182,8 @@ export class InviteController {
         }
     }
 
-    // 초대 링크 생성
-    public async createInviteLink(req: Request, res: Response): Promise<void> {
+    // 초대 코드 생성
+    public async createInviteCode(req: Request, res: Response): Promise<void> {
         try {
             // 1) 토큰에서 fromUserId 추출
             const token = req.headers.authorization?.split(' ')[1];
@@ -263,7 +201,7 @@ export class InviteController {
             const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + 7);
 
-            await prisma.inviteCode.create({
+            const inviteCode = await prisma.inviteCode.create({
                 data: {
                     code,
                     fromUserId,
@@ -271,21 +209,19 @@ export class InviteController {
                     expiresAt
                 }
             });
-
-            // 4) 초대 URL 생성
-            const baseUrl = process.env.FRONTEND_URL || 'https://myapp.com';
-            const inviteUrl = `${baseUrl}/invite?code=${code}`;
-
-            const response: InviteLinkResponseDto = {
-                inviteUrl
-            };
-
+            console.log('🔑 초대 코드 생성:', {
+                code: inviteCode.code,
+                expiresAt: inviteCode.expiresAt
+            });
             res.status(201).json({
                 message: 'Success',
-                data: response
+                data: {
+                    code: inviteCode.code,
+                    expiresAt: inviteCode.expiresAt
+                }
             });
         } catch (error: any) {
-            console.error('createInviteLink error:', error);
+            console.error('createInviteCode error:', error);
             res.status(500).json({
                 message: 'Fail',
                 errorCode: 'errorCode_public001'
@@ -294,8 +230,14 @@ export class InviteController {
     }
 
     // 초대 코드 수락
-    public async acceptInvite(req: Request, res: Response): Promise<void> {
+    public async acceptInviteCode(req: Request, res: Response): Promise<void> {
         try {
+            console.log('📝 초대 코드 수락 요청:', {
+                query: req.query,
+                code: req.query.code,
+                codeType: typeof req.query.code
+            });
+
             // 1) 토큰에서 userId 추출
             const token = req.headers.authorization?.split(' ')[1];
             if (!token) {
@@ -346,7 +288,7 @@ export class InviteController {
                 message: 'Success'
             });
         } catch (error: any) {
-            console.error('acceptInvite error:', error);
+            console.error('acceptInviteCode error:', error);
             res.status(500).json({
                 message: 'Fail',
                 errorCode: 'errorCode_public001'
