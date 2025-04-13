@@ -22,7 +22,9 @@ export class InviteController {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const skip = (page - 1) * limit;
-
+            console.log('🔑 유저아이디:', {
+                userId: userId
+            });
             // 3) 초대 목록 조회
             const [invites, totalCount] = await Promise.all([
                 prisma.invite.findMany({
@@ -232,11 +234,10 @@ export class InviteController {
     // 초대 코드 수락
     public async acceptInviteCode(req: Request, res: Response): Promise<void> {
         try {
-            console.log('📝 초대 코드 수락 요청:', {
-                query: req.query,
-                code: req.query.code,
-                codeType: typeof req.query.code
+            console.log('📝 초대 코드 수락 요청(body):', {
+                body: req.body,
             });
+
 
             // 1) 토큰에서 userId 추출
             const token = req.headers.authorization?.split(' ')[1];
@@ -248,7 +249,7 @@ export class InviteController {
             const userId = decoded.userId;
 
             // 2) 초대 코드 파라미터
-            const { code } = req.query;
+            const { code } = req.body;
             if (!code || typeof code !== 'string') {
                 res.status(400).json({ message: 'Invite code is required' });
                 return;
