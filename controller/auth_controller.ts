@@ -137,4 +137,21 @@ export class AuthController {
       next(error);
     }
   }
+
+  public async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const rawToken = (req as any).rawToken as string;
+
+      // 현재 토큰만 철회
+      await prisma.tokens.updateMany({
+        where: { token: rawToken, isRevoked: false },
+        data: { isRevoked: true },
+      });
+
+      res.status(200).json({ message: 'Logout Success' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
 }

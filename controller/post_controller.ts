@@ -18,11 +18,11 @@ export class PostController {
             // DTO 형태로 req.body 받기
             const postData: CreatePostDto = req.body;
 
-            console.log('📝 요청 데이터:', {
-                postData,
-                body: req.body,
-                contentType: req.headers['content-type']
-            });
+            // console.log('📝 요청 데이터:', {
+            //     postData,
+            //     body: req.body,
+            //     contentType: req.headers['content-type']
+            // });
 
             // 간단 유효성 검사
             if (!postData.content) {
@@ -73,7 +73,7 @@ export class PostController {
                 orderBy: { createdAt: 'desc' },
             });
 
-            console.log('📝 내 게시글 목록:', posts);
+            // console.log('📝 내 게시글 목록:', posts);
 
             res.status(200).json({ message: 'Success', data: posts });
         } catch (error) {
