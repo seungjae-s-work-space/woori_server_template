@@ -41,10 +41,13 @@ export class ExploreController {
                 },
                 select: {
                     id: true,
+                    userId: true,
                     content: true,
                     createdAt: true,
+                    updatedAt: true,
                     user: {
                         select: {
+                            id: true,
                             nickname: true,
                         },
                     },
@@ -61,7 +64,7 @@ export class ExploreController {
                 totalPages,
             };
 
-            console.log('📝 초대한 사람들의 게시글:', response);
+            // console.log('📝 초대한 사람들의 게시글:', response);
 
             res.status(200).json({
                 message: 'Success',
