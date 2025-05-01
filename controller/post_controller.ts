@@ -57,33 +57,58 @@ export class PostController {
 
 
     // [2] 내 게시글 목록 조회
-    public async getMyPosts(req: Request, res: Response): Promise<void> {
-        try {
-            // ① 토큰 해석
-            const token = req.headers.authorization?.split(' ')[1];
-            if (!token) {
-                res.status(401).json({ message: 'No token provided' });
-                return;
-            }
-            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-
-            // ② DB에서 userId=decoded.userId인 글 조회
-            const posts = await prisma.post.findMany({
-                where: { userId: decoded.userId },
-                orderBy: { createdAt: 'desc' },
-            });
-
-            // console.log('📝 내 게시글 목록:', posts);
-
-            res.status(200).json({ message: 'Success', data: posts });
-        } catch (error) {
-            console.error('getMyPosts error:', error);
-            res.status(500).json({
-                message: 'Fail', errorCode: 'errorCode_public001'
-            });
+// 컨트롤러 수정
+public async getMyPosts(req: Request, res: Response): Promise<void> {
+    try {
+        // 토큰 해석
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            res.status(401).json({ message: 'No token provided' });
+            return;
         }
-    }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
 
+        // DB에서 userId=decoded.userId인 글 조회 (좋아요, 댓글 수 포함)
+        const posts = await prisma.post.findMany({
+            where: { userId: decoded.userId },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        nickname: true,
+                    }
+                },
+                _count: {
+                    select: {
+                        likes: true,
+                        comments: true,
+                    }
+                }
+            }
+        });
+
+        // 응답 데이터 형식 가공
+        const formattedPosts = posts.map(post => ({
+            id: post.id,
+            userId: post.userId,
+            content: post.content,
+            imageUrl: post.imageUrl,
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
+            user: post.user,
+            likeCount: post._count.likes,
+            commentCount: post._count.comments,
+        }));
+
+        res.status(200).json({ message: 'Success', data: formattedPosts });
+    } catch (error) {
+        console.error('getMyPosts error:', error);
+        res.status(500).json({
+            message: 'Fail', errorCode: 'errorCode_public001'
+        });
+    }
+}
     // [3] 게시글 삭제
     public async deletePost(req: Request, res: Response): Promise<void> {
         try {
@@ -120,4 +145,72 @@ export class PostController {
             });
         }
     }
+    public async getPostById(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const token = req.headers.authorization?.split(' ')[1];
+            let myId = null;
+
+            if (token) {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+                myId = decoded.userId;
+            }
+
+            // 1) 게시물 조회
+            const post = await prisma.post.findUnique({
+                where: { id },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            nickname: true
+                        }
+                    },
+                    _count: {
+                        select: {
+                            comments: true,
+                            likes: true
+                        }
+                    }
+                }
+            });
+
+            if (!post) {
+                res.status(404).json({ message: 'Post not found' });
+                return;
+            }
+
+            // 2) 현재 사용자가 좋아요 했는지 확인
+            let isLiked = false;
+            if (myId) {
+                const myLike = await prisma.like.findUnique({
+                    where: {
+                        postId_userId: {
+                            postId: id,
+                            userId: myId
+                        }
+                    }
+                });
+                isLiked = !!myLike;
+            }
+
+            // 3) 응답 데이터 생성
+            const response = {
+                ...post,
+                isLiked
+            };
+
+            res.status(200).json({
+                message: 'Success',
+                data: response
+            });
+        } catch (error: any) {
+            console.error('getPostById error:', error);
+            res.status(500).json({
+                message: 'Fail',
+                errorCode: 'errorCode_post001'
+            });
+        }
+    }
+
 }
