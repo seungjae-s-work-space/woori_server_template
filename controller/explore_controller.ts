@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { prisma } from '../prisma.js';
-import { ExploreResponseDto } from '../types/explore_type.js';
 import jwt from 'jsonwebtoken';
 
 export class ExploreController {
@@ -52,14 +51,41 @@ export class ExploreController {
                             nickname: true,
                         },
                     },
+                    _count: {
+                        select: {
+                            likes: true,
+                            comments: true,
+                        },
+                    },
                 },
             });
 
-            // 5) 응답
+            // 5) 각 게시글에 대해 현재 사용자의 좋아요 여부 확인
+            const postsWithLikeStatus = await Promise.all(
+                posts.map(async (post) => {
+                    const myLike = await prisma.like.findUnique({
+                        where: {
+                            postId_userId: {
+                                postId: post.id,
+                                userId: myId,
+                            },
+                        },
+                    });
+
+                    return {
+                        ...post,
+                        likeCount: post._count.likes,
+                        commentCount: post._count.comments,
+                        isLiked: !!myLike,
+                    };
+                })
+            );
+
+            // 6) 응답
             const totalPages = Math.ceil(totalCount / limit);
 
             const response = {
-                posts,
+                posts: postsWithLikeStatus,
                 totalCount,
                 currentPage: page,
                 totalPages,
