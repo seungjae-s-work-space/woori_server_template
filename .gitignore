@@ -9,5 +9,3 @@ package-lock.json
 /cloudflare/*.pem
 
 .notepad
-
-package-lock.json

@@ -10,7 +10,7 @@ import exploreRouter from './routes/explore_route.js';
 import inviteRouter from './routes/invite_route.js';
 import commentRouter from './routes/comment_route.js';
 import likeRouter from './routes/like_route.js';
-import { prisma } from "./prisma.js";  // prisma 인스턴스 import
+import { prisma } from "./prisma.js";
 
 dotenv.config();
 export const app = express();

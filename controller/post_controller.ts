@@ -2,9 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../prisma.js';
 import { CreatePostDto } from '../types/post_type.js';
+import { uploadToR2 } from '../utils/r2_client.js';
 
 export class PostController {
-    // [1] 게시글 생성
+    // [1] 게시글 생성 (이미지 업로드 포함)
     public async createPost(req: Request, res: Response): Promise<void> {
         try {
             // 토큰 해석
@@ -15,38 +16,55 @@ export class PostController {
             }
             const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
 
-            // DTO 형태로 req.body 받기
-            const postData: CreatePostDto = req.body;
-
-            // console.log('📝 요청 데이터:', {
-            //     postData,
-            //     body: req.body,
-            //     contentType: req.headers['content-type']
-            // });
+            // 멀티파트 폼 데이터에서 content 받기
+            const { content } = req.body;
 
             // 간단 유효성 검사
-            if (!postData.content) {
+            if (!content) {
                 res.status(400).json({ message: 'Content is required' });
                 return;
+            }
+
+            // 업로드된 파일이 있는지 확인 (multer가 req.file에 저장)
+            let imageUrl: string | null = null;
+            if (req.file) {
+                // R2에 파일 업로드
+                const fileName = `posts/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+                imageUrl = await uploadToR2(
+                    req.file.buffer,
+                    fileName,
+                    req.file.mimetype
+                );
+                console.log('📷 이미지 R2 업로드 성공:', imageUrl);
             }
 
             // DB에 글 생성
             const newPost = await prisma.post.create({
                 data: {
-                    content: postData.content,
+                    content: content,
+                    imageUrl: imageUrl,
                     userId: decoded.userId,
                 },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            nickname: true,
+                            email: true,
+                        }
+                    }
+                }
             });
 
+            console.log('✅ 게시물 생성 성공:', { postId: newPost.id, hasImage: !!imageUrl });
             res.status(201).json({ message: 'Success', data: newPost });
         } catch (error: any) {
-            console.error('createPost error:', {
+            console.error('❌ createPost error:', {
                 error: error,
                 errorName: error?.name,
                 errorMessage: error?.message,
-                errorStack: error?.stack,
                 requestBody: req.body,
-                headers: req.headers
+                file: req.file,
             });
             res.status(500).json({
                 message: 'Fail',

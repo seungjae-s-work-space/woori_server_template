@@ -43,6 +43,7 @@ export class ExploreController {
                     id: true,
                     userId: true,
                     content: true,
+                    imageUrl: true,
                     createdAt: true,
                     updatedAt: true,
                     user: {
