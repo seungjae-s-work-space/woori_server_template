@@ -2,23 +2,23 @@ import { Request, Response, NextFunction } from "express";
 
 
 export const validationSignUp = (req: Request, res: Response, next: NextFunction): void => {
-    const { email, password, nickname } = req.body;
+    const { password, nickname } = req.body;
 
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const nicknameRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        res.status(400).json({ message: "Fail", errorCode: "errorCode_auth001" });
+    // 닉네임, 비밀번호 필수 검증
+    if (!password || !nickname) {
+        res.status(400).json({ message: "Fail", errorCode: "errorCode_auth003" });
         return;
     }
 
+    // 비밀번호 길이 검증
     if (password.length < 4) {
         res.status(400).json({ message: "Fail", errorCode: "errorCode_auth002" });
         return;
     }
 
-    if (!password || !nickname) {
-        res.status(400).json({ message: "Fail", errorCode: "errorCode_auth003" });
+    // 닉네임 길이 검증 (2-20자)
+    if (nickname.length < 2 || nickname.length > 20) {
+        res.status(400).json({ message: "Fail", errorCode: "errorCode_auth010" });
         return;
     }
 

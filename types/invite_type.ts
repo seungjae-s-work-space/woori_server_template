@@ -1,11 +1,10 @@
 export interface CreateInviteDto {
-    toUserEmail: string;
+    toUserNickname: string;
 }
 
 export interface InviteUserDto {
     id: string;
     nickname: string;
-    email: string;
 }
 
 export interface InviteResponseDto {

@@ -13,20 +13,7 @@ export class AuthController {
       // DTO 형태로 req.body를 받아옴
       const userData: CreateUserDto = req.body;
 
-      // 이미 존재하는 이메일인지 확인
-      const existingUser = await prisma.user.findUnique({
-        where: { email: userData.email },
-      });
-
-      if (existingUser) {
-        // 유저가 이미 존재하면 400 에러 응답 후 함수 종료
-        res.status(400).json({
-          message: 'Fail',
-          errorCode: 'errorCode_auth004', //이미 가입된 이메일
-        });
-        return;
-      }
-
+      // 이미 존재하는 닉네임인지 확인
       const existingNickname = await prisma.user.findUnique({
         where: { nickname: userData.nickname },
       });
@@ -46,7 +33,6 @@ export class AuthController {
       // 새 유저 생성
       const newUser = await prisma.user.create({
         data: {
-          email: userData.email,
           password: hashedPassword,
           nickname: userData.nickname
         },

@@ -36,15 +36,13 @@ export class InviteController {
                         fromUser: {
                             select: {
                                 id: true,
-                                nickname: true,
-                                email: true
+                                nickname: true
                             }
                         },
                         toUser: {
                             select: {
                                 id: true,
-                                nickname: true,
-                                email: true
+                                nickname: true
                             }
                         }
                     }
@@ -100,15 +98,13 @@ export class InviteController {
                         fromUser: {
                             select: {
                                 id: true,
-                                nickname: true,
-                                email: true
+                                nickname: true
                             }
                         },
                         toUser: {
                             select: {
                                 id: true,
-                                nickname: true,
-                                email: true
+                                nickname: true
                             }
                         }
                     }

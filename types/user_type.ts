@@ -1,5 +1,4 @@
 export interface UpdateUserDto {
-    email: string;
     nickname: string;
 }
 

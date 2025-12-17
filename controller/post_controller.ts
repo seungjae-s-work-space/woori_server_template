@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../prisma.js';
 import { CreatePostDto } from '../types/post_type.js';
 import { uploadToR2 } from '../utils/r2_client.js';
+import { optimizeImage } from '../utils/image_optimizer.js';
 
 export class PostController {
     // [1] 게시글 생성 (이미지 업로드 포함)
@@ -28,14 +29,17 @@ export class PostController {
             // 업로드된 파일이 있는지 확인 (multer가 req.file에 저장)
             let imageUrl: string | null = null;
             if (req.file) {
-                // R2에 파일 업로드
-                const fileName = `posts/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+                // 이미지 최적화 (리사이징 + WebP 변환 + 압축)
+                const optimized = await optimizeImage(req.file.buffer);
+
+                // R2에 최적화된 파일 업로드
+                const fileName = `posts/${Date.now()}-${Math.random().toString(36).substring(7)}.${optimized.extension}`;
                 imageUrl = await uploadToR2(
-                    req.file.buffer,
+                    optimized.buffer,
                     fileName,
-                    req.file.mimetype
+                    optimized.contentType
                 );
-                console.log('📷 이미지 R2 업로드 성공:', imageUrl);
+                console.log('📷 이미지 최적화 및 R2 업로드 성공:', imageUrl);
             }
 
             // DB에 글 생성
@@ -50,7 +54,6 @@ export class PostController {
                         select: {
                             id: true,
                             nickname: true,
-                            email: true,
                         }
                     }
                 }

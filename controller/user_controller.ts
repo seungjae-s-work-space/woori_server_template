@@ -38,7 +38,6 @@ export class UserController {
                     id: decodedToken.userId,
                 },
                 select: {
-                    email: true,
                     nickname: true,
                 }
             }); // 유저 가져오기
@@ -61,7 +60,6 @@ export class UserController {
 
 
             const responseUser = {
-                email: user.email,
                 nickname: user.nickname,
             }
 
