@@ -267,6 +267,31 @@ export class InviteController {
                 return;
             }
 
+            // 본인 초대 방지
+            if (inviteCode.fromUserId === userId) {
+                res.status(400).json({
+                    message: 'Fail',
+                    errorCode: 'errorCode_invite001'
+                });
+                return;
+            }
+
+            // 같은 방향의 중복 초대만 방지 (A→B가 있으면 A→B 막음, B→A는 허용)
+            const existingInvite = await prisma.invite.findFirst({
+                where: {
+                    fromUserId: inviteCode.fromUserId,
+                    toUserId: userId
+                }
+            });
+
+            if (existingInvite) {
+                res.status(400).json({
+                    message: 'Fail',
+                    errorCode: 'errorCode_invite002'
+                });
+                return;
+            }
+
             // 4) 초대 코드 업데이트
             await prisma.inviteCode.update({
                 where: { id: inviteCode.id },
