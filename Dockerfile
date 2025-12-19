@@ -6,7 +6,8 @@ WORKDIR /app
 
 # 패키지 install
 COPY package*.json ./
-RUN npm install
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+RUN npm install --production
 
 # 앱 파일 copy
 COPY . .
